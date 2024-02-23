@@ -155,7 +155,7 @@ export default {
   com_auth_click_here: 'Click here',
   com_auth_to_try_again: 'to try again.',
   com_auth_submit_registration: 'Submit registration',
-  com_auth_welcome_back: 'Welcome back',
+  com_auth_welcome_back: 'Welcome to ETOChat',
   com_auth_back_to_login: 'Back to Login',
   com_endpoint_open_menu: 'Open Menu',
   com_endpoint_bing_enable_sydney: 'Enable Sydney',
@@ -282,7 +282,7 @@ export default {
   com_endpoint_skip_hover:
     'Enable skipping the completion step, which reviews the final answer and generated steps',
   com_endpoint_config_key: 'Set API Key',
-  com_endpoint_config_placeholder: 'Set your Key in the Header menu to chat.',
+  com_endpoint_config_placeholder: 'Click on "OpenAI" at the top and set API Key from https://ai.cs.ac.cn to start.',
   com_endpoint_config_key_for: 'Set API Key for',
   com_endpoint_config_key_name: 'Key',
   com_endpoint_config_value: 'Enter value for',
