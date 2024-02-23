@@ -90,8 +90,8 @@ Guidelines:
         prompt: this.replaceUnwantedChars(input),
         // TODO: Future idea -- could we ask an LLM to extract these arguments from an input that might contain them?
         n: 1,
-        // size: '1024x1024'
-        size: '512x512',
+        size: '1024x1024',
+        // size: '512x512',
       });
     } catch (error) {
       logger.error('[DALL-E] Problem generating the image:', error);
