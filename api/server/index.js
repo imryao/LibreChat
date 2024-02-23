@@ -80,7 +80,7 @@ const startServer = async () => {
   app.use('/api/files', await routes.files.initialize());
 
   app.use((req, res) => {
-    res.status(404).sendFile(path.join(app.locals.paths.dist, 'index.html'));
+    res.sendFile(path.join(app.locals.paths.dist, 'index.html'));
   });
 
   app.listen(port, host, () => {
