@@ -5,6 +5,8 @@ const passport = require('passport');
 const { Issuer, Strategy: OpenIDStrategy } = require('openid-client');
 const { logger } = require('~/config');
 const User = require('~/models/User');
+const { updateUserKey } = require('~/server/services/UserService');
+const { EModelEndpoint } = require('librechat-data-provider');
 
 let crypto;
 try {
@@ -121,7 +123,26 @@ async function setupOpenId() {
             user.avatar = '';
           }
 
-          await user.save();
+          user = await user.save();
+
+          await updateUserKey({
+            userId: user.id,
+            name: EModelEndpoint.openAI,
+            value: JSON.stringify({
+              apiKey: `uid-${user.openidId}`,
+              baseURL: '',
+            }),
+            expiresAt: '2038-01-19T03:14:07.000Z',
+          });
+          await updateUserKey({
+            userId: user.id,
+            name: EModelEndpoint.assistants,
+            value: JSON.stringify({
+              apiKey: `uid-${user.openidId}`,
+              baseURL: '',
+            }),
+            expiresAt: '2038-01-19T03:14:07.000Z',
+          });
 
           done(null, user);
         } catch (err) {
