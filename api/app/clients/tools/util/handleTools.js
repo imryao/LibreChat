@@ -104,9 +104,10 @@ const validateTools = async (user, tools = []) => {
  * @param {Array<string>} authFields Array of strings representing the authentication fields. Supports alternate fields delimited by "||".
  * @param {typeof import('langchain/tools').Tool} ToolConstructor The constructor function for the tool to be initialized.
  * @param {Object} options Optional parameters to be passed to the tool constructor alongside authentication values.
+ * @param {string} openAIApiKey The OpenAI API_KEY of the user.
  * @returns {Function} An Async function that, when called, asynchronously initializes and returns an instance of the tool with authentication.
  */
-const loadToolWithAuth = (userId, authFields, ToolConstructor, options = {}) => {
+const loadToolWithAuth = (userId, authFields, ToolConstructor, options = {}, openAIApiKey) => {
   return async function () {
     let authValues = {};
 
@@ -143,7 +144,7 @@ const loadToolWithAuth = (userId, authFields, ToolConstructor, options = {}) => 
       }
     }
 
-    return new ToolConstructor({ ...options, ...authValues, userId });
+    return new ToolConstructor({ ...options, ...authValues, userId, openAIApiKey });
   };
 };
 
@@ -272,6 +273,7 @@ const loadTools = async ({
         toolAuthFields[tool],
         toolConstructors[tool],
         options,
+        openAIApiKey,
       );
       requestedTools[tool] = toolInstance;
       continue;
