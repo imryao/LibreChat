@@ -4,11 +4,10 @@ const OpenAI = require('openai');
 const { v4: uuidv4 } = require('uuid');
 const { Tool } = require('langchain/tools');
 const { HttpsProxyAgent } = require('https-proxy-agent');
-const { FileContext, EModelEndpoint } = require('librechat-data-provider');
+const { FileContext } = require('librechat-data-provider');
 const { getImageBasename } = require('~/server/services/Files/images');
 const extractBaseURL = require('~/utils/extractBaseURL');
 const { logger } = require('~/config');
-const { getUserKey } = require('~/server/services/UserService');
 
 class DALLE3 extends Tool {
   constructor(fields = {}) {
@@ -24,10 +23,7 @@ class DALLE3 extends Tool {
       this.processFileURL = fields.processFileURL.bind(this);
     }
 
-    let apiKey = '';
-    if (this.userId) {
-      apiKey = this.getApiKey(this.userId);
-    }
+    let apiKey = fields.DALLE3_API_KEY ?? fields.DALLE_API_KEY ?? this.getApiKey();
     const config = { apiKey };
     if (process.env.DALLE_REVERSE_PROXY) {
       config.baseURL = extractBaseURL(process.env.DALLE_REVERSE_PROXY);
@@ -91,14 +87,12 @@ class DALLE3 extends Tool {
     });
   }
 
-  async getApiKey(userId) {
-    let userValues = await getUserKey({ userId, name: EModelEndpoint.openAI });
-    try {
-      userValues = JSON.parse(userValues);
-    } catch (e) {
-      throw new Error('Invalid JSON provided for openAI user values. Please provide them again.');
+  getApiKey() {
+    const apiKey = process.env.DALLE3_API_KEY ?? process.env.DALLE_API_KEY ?? '';
+    if (!apiKey && !this.override) {
+      throw new Error('Missing DALLE_API_KEY environment variable.');
     }
-    return userValues.apiKey;
+    return apiKey;
   }
 
   replaceUnwantedChars(inputString) {
