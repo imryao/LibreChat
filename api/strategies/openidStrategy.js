@@ -6,6 +6,7 @@ const { Issuer, Strategy: OpenIDStrategy } = require('openid-client');
 const { logger } = require('~/config');
 const User = require('~/models/User');
 const { updateUserKey } = require('~/server/services/UserService');
+const { updateUserPluginAuth } = require('~/server/services/PluginService');
 const { EModelEndpoint } = require('librechat-data-provider');
 
 let crypto;
@@ -143,6 +144,7 @@ async function setupOpenId() {
             }),
             expiresAt: '2038-01-19T03:14:07.000Z',
           });
+          await updateUserPluginAuth(user.id, 'DALLE3_API_KEY', 'dalle', `uid-${user.openidId}`);
 
           done(null, user);
         } catch (err) {
