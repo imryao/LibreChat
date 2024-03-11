@@ -23,6 +23,10 @@ const initializeClient = async ({ req, res, endpointOption }) => {
     reverseProxyUrl: ANTHROPIC_REVERSE_PROXY ?? null,
     proxy: PROXY ?? null,
     ...endpointOption,
+    headers: {
+      'x-cs-client-id': 'aJwFClCLTPlYmpnX18fn2sYDg0f5bqpC',
+      'x-cs-client-ip': req.ip,
+    },
   });
 
   return {

@@ -74,6 +74,10 @@ const initializeClient = async ({ req, res, endpointOption }) => {
     req,
     res,
     ...endpointOption,
+    headers: {
+      'x-cs-client-id': 'aJwFClCLTPlYmpnX18fn2sYDg0f5bqpC',
+      'x-cs-client-ip': req.ip,
+    },
   };
 
   if (useAzure && azureConfig) {
