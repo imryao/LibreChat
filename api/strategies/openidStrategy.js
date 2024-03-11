@@ -146,10 +146,7 @@ async function setupOpenId() {
           await updateUserKey({
             userId: user.id,
             name: EModelEndpoint.anthropic,
-            value: JSON.stringify({
-              apiKey: `uid-${user.openidId}`,
-              baseURL: '',
-            }),
+            value: `uid-${user.openidId}`,
             expiresAt: '2038-01-19T03:14:07.000Z',
           });
 
