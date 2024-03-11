@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Settings } from 'lucide-react';
+// import { Settings } from 'lucide-react';
 import { alternateName } from 'librechat-data-provider';
 import { useGetEndpointsQuery } from 'librechat-data-provider/react-query';
 import { DropdownMenuRadioItem } from '~/components';
 import { SetKeyDialog } from '../SetKeyDialog';
 import { cn, getEndpointField } from '~/utils';
 import { Icon } from '~/components/Endpoints';
-import { useLocalize } from '~/hooks';
+// import { useLocalize } from '~/hooks';
 
 export default function ModelItem({
   endpoint,
@@ -34,7 +34,7 @@ export default function ModelItem({
     endpoint,
     'userProvide',
   );
-  const localize = useLocalize();
+  // const localize = useLocalize();
 
   // regular model
   return (
@@ -56,21 +56,21 @@ export default function ModelItem({
           </span>
         )}
         <div className="flex w-4 flex-1" />
-        {userProvidesKey ? (
-          <button
-            className={cn(
-              'invisible m-0 mr-1 flex-initial rounded-md p-0 text-xs font-medium text-gray-400 hover:text-gray-700 group-hover:visible dark:font-normal dark:text-gray-400 dark:hover:text-gray-200',
-              isSelected ? 'visible text-gray-700 dark:text-gray-200' : '',
-            )}
-            onClick={(e) => {
-              e.preventDefault();
-              setDialogOpen(true);
-            }}
-          >
-            <Settings className="mr-1 inline-block w-[16px] items-center stroke-1" />
-            {localize('com_endpoint_config_key')}
-          </button>
-        ) : null}
+        {/*{userProvidesKey ? (*/}
+        {/*  <button*/}
+        {/*    className={cn(*/}
+        {/*      'invisible m-0 mr-1 flex-initial rounded-md p-0 text-xs font-medium text-gray-400 hover:text-gray-700 group-hover:visible dark:font-normal dark:text-gray-400 dark:hover:text-gray-200',*/}
+        {/*      isSelected ? 'visible text-gray-700 dark:text-gray-200' : '',*/}
+        {/*    )}*/}
+        {/*    onClick={(e) => {*/}
+        {/*      e.preventDefault();*/}
+        {/*      setDialogOpen(true);*/}
+        {/*    }}*/}
+        {/*  >*/}
+        {/*    <Settings className="mr-1 inline-block w-[16px] items-center stroke-1" />*/}
+        {/*    {localize('com_endpoint_config_key')}*/}
+        {/*  </button>*/}
+        {/*) : null}*/}
       </DropdownMenuRadioItem>
       {userProvidesKey && (
         <SetKeyDialog open={isDialogOpen} onOpenChange={setDialogOpen} endpoint={endpoint} />

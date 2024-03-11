@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings } from 'lucide-react';
+// import { Settings } from 'lucide-react';
 import { useRecoilValue } from 'recoil';
 import { EModelEndpoint, modularEndpoints } from 'librechat-data-provider';
 import { useGetEndpointsQuery } from 'librechat-data-provider/react-query';
@@ -7,7 +7,7 @@ import type { TPreset, TConversation } from 'librechat-data-provider';
 import type { FC } from 'react';
 import { useLocalize, useUserKey, useDefaultConvo } from '~/hooks';
 import { SetKeyDialog } from '~/components/Input/SetKeyDialog';
-import { cn, getEndpointField } from '~/utils';
+import { getEndpointField } from '~/utils';
 import { useChatContext } from '~/Providers';
 import { icons } from './Icons';
 import store from '~/store';
@@ -125,29 +125,29 @@ const MenuItem: FC<MenuItemProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {userProvidesKey ? (
-              <div className="text-token-text-primary" key={`set-key-${endpoint}`}>
-                <button
-                  className={cn(
-                    'invisible flex gap-x-1 group-hover:visible',
-                    selected ? 'visible' : '',
-                    expiryTime
-                      ? 'w-full rounded-lg p-2 hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : '',
-                  )}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDialogOpen(true);
-                  }}
-                >
-                  <div className={cn('invisible group-hover:visible', expiryTime ? 'text-xs' : '')}>
-                    {localize('com_endpoint_config_key')}
-                  </div>
-                  <Settings className={cn(expiryTime ? 'icon-sm' : 'icon-md stroke-1')} />
-                </button>
-              </div>
-            ) : null}
+            {/*{userProvidesKey ? (*/}
+            {/*  <div className="text-token-text-primary" key={`set-key-${endpoint}`}>*/}
+            {/*    <button*/}
+            {/*      className={cn(*/}
+            {/*        'invisible flex gap-x-1 group-hover:visible',*/}
+            {/*        selected ? 'visible' : '',*/}
+            {/*        expiryTime*/}
+            {/*          ? 'w-full rounded-lg p-2 hover:bg-gray-200 dark:hover:bg-gray-800'*/}
+            {/*          : '',*/}
+            {/*      )}*/}
+            {/*      onClick={(e) => {*/}
+            {/*        e.preventDefault();*/}
+            {/*        e.stopPropagation();*/}
+            {/*        setDialogOpen(true);*/}
+            {/*      }}*/}
+            {/*    >*/}
+            {/*      <div className={cn('invisible group-hover:visible', expiryTime ? 'text-xs' : '')}>*/}
+            {/*        {localize('com_endpoint_config_key')}*/}
+            {/*      </div>*/}
+            {/*      <Settings className={cn(expiryTime ? 'icon-sm' : 'icon-md stroke-1')} />*/}
+            {/*    </button>*/}
+            {/*  </div>*/}
+            {/*) : null}*/}
             {selected && (
               <svg
                 width="24"
