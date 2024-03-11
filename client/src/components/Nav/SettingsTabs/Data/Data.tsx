@@ -12,7 +12,7 @@ export const RevokeKeysButton = ({
   showText = true,
   endpoint = '',
   all = false,
-  disabled = false,
+  disabled = true,
 }: {
   showText?: boolean;
   endpoint?: string;
