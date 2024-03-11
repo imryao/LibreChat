@@ -118,6 +118,10 @@ class AnthropicClient extends BaseClient {
       options.baseURL = this.options.reverseProxyUrl;
     }
 
+    if (this.options.headers) {
+      options.defaultHeaders = { ...options.defaultHeaders, ...this.options.headers };
+    }
+
     return new Anthropic(options);
   }
 
