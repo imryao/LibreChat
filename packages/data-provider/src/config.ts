@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import { z } from 'zod';
+import type { ZodError } from 'zod';
 import { EModelEndpoint, eModelEndpointSchema } from './schemas';
 import { fileConfigSchema } from './file-config';
 import { FileSources } from './types/files';
@@ -79,6 +80,11 @@ export type TValidatedAzureConfig = {
   modelNames: string[];
   modelGroupMap: TAzureModelGroupMap;
   groupMap: TAzureGroupMap;
+};
+
+export type TAzureConfigValidationResult = TValidatedAzureConfig & {
+  isValid: boolean;
+  errors: (ZodError | string)[];
 };
 
 export enum Capabilities {
@@ -173,7 +179,7 @@ export const azureEndpointSchema = z
   );
 
 export type TAzureConfig = Omit<z.infer<typeof azureEndpointSchema>, 'groups'> &
-  TValidatedAzureConfig;
+  TAzureConfigValidationResult;
 
 export const rateLimitSchema = z.object({
   fileUploads: z
@@ -186,10 +192,17 @@ export const rateLimitSchema = z.object({
     .optional(),
 });
 
+export enum EImageOutputType {
+  PNG = 'png',
+  WEBP = 'webp',
+  JPEG = 'jpeg',
+}
+
 export const configSchema = z.object({
   version: z.string(),
   cache: z.boolean().optional().default(true),
   secureImageLinks: z.boolean().optional(),
+  imageOutputType: z.nativeEnum(EImageOutputType).optional().default(EImageOutputType.PNG),
   interface: z
     .object({
       privacyPolicy: z
@@ -382,7 +395,17 @@ export const supportsBalanceCheck = {
   [EModelEndpoint.azureOpenAI]: true,
 };
 
-export const visionModels = ['gpt-4-vision', 'llava-13b', 'gemini-pro-vision', 'claude-3'];
+export const visionModels = [
+  'gpt-4-vision',
+  'llava-13b',
+  'gemini-pro-vision',
+  'claude-3',
+  'gemini-1.5',
+  'gpt-4-turbo',
+];
+export enum VisionModes {
+  generative = 'generative',
+}
 
 export function validateVisionModel({
   model,
@@ -394,6 +417,10 @@ export function validateVisionModel({
   availableModels?: string[];
 }) {
   if (!model) {
+    return false;
+  }
+
+  if (model === 'gpt-4-turbo-preview') {
     return false;
   }
 
@@ -455,6 +482,15 @@ export enum CacheKeys {
    * Key for the override config cache.
    */
   OVERRIDE_CONFIG = 'overrideConfig',
+  /**
+   * Key for the bans cache.
+   */
+  BANS = 'bans',
+  /**
+   * Key for the encoded domains cache.
+   * Used by Azure OpenAI Assistants.
+   */
+  ENCODED_DOMAINS = 'encoded_domains',
 }
 
 /**
@@ -473,6 +509,10 @@ export enum ViolationTypes {
    * Token Limit Violation.
    */
   TOKEN_BALANCE = 'token_balance',
+  /**
+   * An issued ban.
+   */
+  BAN = 'ban',
 }
 
 /**
@@ -485,6 +525,8 @@ export enum AuthKeys {
   GOOGLE_SERVICE_KEY = 'GOOGLE_SERVICE_KEY',
   /**
    * API key to use Google Generative AI.
+   *
+   * Note: this is not for Environment Variables, but to access encrypted object values.
    */
   GOOGLE_API_KEY = 'GOOGLE_API_KEY',
 }
@@ -546,11 +588,15 @@ export enum Constants {
   /**
    * Key for the Custom Config's version (librechat.yaml).
    */
-  CONFIG_VERSION = '1.0.5',
+  CONFIG_VERSION = '1.0.6',
   /**
    * Standard value for the first message's `parentMessageId` value, to indicate no parent exists.
    */
   NO_PARENT = '00000000-0000-0000-0000-000000000000',
+  /**
+   * Fixed, encoded domain length for Azure OpenAI Assistants Function name parsing.
+   */
+  ENCODED_DOMAIN_LENGTH = 10,
 }
 
 /**
