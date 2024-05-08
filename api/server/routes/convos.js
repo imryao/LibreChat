@@ -6,6 +6,7 @@ const { getConvosByPage, deleteConvos, getConvo, saveConvo } = require('~/models
 const { IMPORT_CONVERSATION_JOB_NAME } = require('~/server/utils/import/jobDefinition');
 const { storage, importFileFilter } = require('~/server/routes/files/multer');
 const requireJwtAuth = require('~/server/middleware/requireJwtAuth');
+const { forkConversation } = require('~/server/utils/import/fork');
 const { createImportLimiters } = require('~/server/middleware');
 const jobScheduler = require('~/server/utils/jobScheduler');
 const getLogStores = require('~/cache/getLogStores');
@@ -23,7 +24,15 @@ router.get('/', async (req, res) => {
     return res.status(400).json({ error: 'Invalid page number' });
   }
 
-  res.status(200).send(await getConvosByPage(req.user.id, pageNumber));
+  let pageSize = req.query.pageSize || 25;
+  pageSize = parseInt(pageSize, 10);
+
+  if (isNaN(pageSize) || pageSize < 1) {
+    return res.status(400).json({ error: 'Invalid page size' });
+  }
+  const isArchived = req.query.isArchived === 'true';
+
+  res.status(200).send(await getConvosByPage(req.user.id, pageNumber, pageSize, isArchived));
 });
 
 router.get('/:conversationId', async (req, res) => {
@@ -130,6 +139,35 @@ router.post(
     }
   },
 );
+
+/**
+ * POST /fork
+ * This route handles forking a conversation based on the TForkConvoRequest and responds with TForkConvoResponse.
+ * @route POST /fork
+ * @param {express.Request<{}, TForkConvoResponse, TForkConvoRequest>} req - Express request object.
+ * @param {express.Response<TForkConvoResponse>} res - Express response object.
+ * @returns {Promise<void>} - The response after forking the conversation.
+ */
+router.post('/fork', async (req, res) => {
+  try {
+    /** @type {TForkConvoRequest} */
+    const { conversationId, messageId, option, splitAtTarget, latestMessageId } = req.body;
+    const result = await forkConversation({
+      requestUserId: req.user.id,
+      originalConvoId: conversationId,
+      targetMessageId: messageId,
+      latestMessageId,
+      records: true,
+      splitAtTarget,
+      option,
+    });
+
+    res.json(result);
+  } catch (error) {
+    logger.error('Error forking conversation', error);
+    res.status(500).send('Error forking conversation');
+  }
+});
 
 // Get the status of an import job for polling
 router.get('/import/jobs/:jobId', async (req, res) => {

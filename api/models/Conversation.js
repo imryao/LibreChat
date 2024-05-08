@@ -2,6 +2,12 @@ const Conversation = require('./schema/convoSchema');
 const { getMessages, deleteMessages } = require('./Message');
 const logger = require('~/config/winston');
 
+/**
+ * Retrieves a single conversation for a given user and conversation ID.
+ * @param {string} user - The user's ID.
+ * @param {string} conversationId - The conversation's ID.
+ * @returns {Promise<TConversation>} The conversation object.
+ */
 const getConvo = async (user, conversationId) => {
   try {
     return await Conversation.findOne({ user, conversationId }).lean();
@@ -48,11 +54,17 @@ module.exports = {
       throw new Error('Failed to save conversations in bulk.');
     }
   },
-  getConvosByPage: async (user, pageNumber = 1, pageSize = 25) => {
+  getConvosByPage: async (user, pageNumber = 1, pageSize = 25, isArchived = false) => {
+    const query = { user };
+    if (isArchived) {
+      query.isArchived = true;
+    } else {
+      query.$or = [{ isArchived: false }, { isArchived: { $exists: false } }];
+    }
     try {
-      const totalConvos = (await Conversation.countDocuments({ user })) || 1;
+      const totalConvos = (await Conversation.countDocuments(query)) || 1;
       const totalPages = Math.ceil(totalConvos / pageSize);
-      const convos = await Conversation.find({ user })
+      const convos = await Conversation.find(query)
         .sort({ updatedAt: -1 })
         .skip((pageNumber - 1) * pageSize)
         .limit(pageSize)
