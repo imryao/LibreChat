@@ -129,6 +129,10 @@ class OpenAIClient extends BaseClient {
       this.useOpenRouter = true;
     }
 
+    if (this.options.endpoint?.toLowerCase() === 'ollama') {
+      this.isOllama = true;
+    }
+
     this.FORCE_PROMPT =
       isEnabled(OPENAI_FORCE_PROMPT) ||
       (reverseProxy && reverseProxy.includes('completions') && !reverseProxy.includes('chat'));
@@ -161,11 +165,13 @@ class OpenAIClient extends BaseClient {
       model.startsWith('text-chat') || model.startsWith('text-davinci-002-render');
 
     this.maxContextTokens =
+      this.options.maxContextTokens ??
       getModelMaxTokens(
         model,
         this.options.endpointType ?? this.options.endpoint,
         this.options.endpointTokenConfig,
-      ) ?? 4095; // 1 less than maximum
+      ) ??
+      4095; // 1 less than maximum
 
     if (this.shouldSummarize) {
       this.maxContextTokens = Math.floor(this.maxContextTokens / 2);
@@ -407,6 +413,7 @@ class OpenAIClient extends BaseClient {
 
   getSaveOptions() {
     return {
+      maxContextTokens: this.options.maxContextTokens,
       chatGptLabel: this.options.chatGptLabel,
       promptPrefix: this.options.promptPrefix,
       resendFiles: this.options.resendFiles,
@@ -435,7 +442,11 @@ class OpenAIClient extends BaseClient {
    * @returns {Promise<MongoFile[]>}
    */
   async addImageURLs(message, attachments) {
-    const { files, image_urls } = await encodeAndFormat(this.options.req, attachments);
+    const { files, image_urls } = await encodeAndFormat(
+      this.options.req,
+      attachments,
+      this.options.endpoint,
+    );
     message.image_urls = image_urls.length ? image_urls : undefined;
     return files;
   }
@@ -1114,7 +1125,7 @@ ${convo}
       });
 
       /* Re-orders system message to the top of the messages payload, as not allowed anywhere else */
-      if (opts.baseURL.includes('api.mistral.ai') && modelOptions.messages) {
+      if (modelOptions.messages && (opts.baseURL.includes('api.mistral.ai') || this.isOllama)) {
         const { messages } = modelOptions;
 
         const systemMessageIndex = messages.findIndex((msg) => msg.role === 'system');
@@ -1158,7 +1169,7 @@ ${convo}
         });
       }
 
-      if (this.options.attachments && this.options.endpoint?.toLowerCase() === 'ollama') {
+      if (this.message_file_map && this.isOllama) {
         const ollamaClient = new OllamaClient({ baseURL });
         return await ollamaClient.chatCompletion({
           payload: modelOptions,
