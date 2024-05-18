@@ -7,7 +7,6 @@ const { logger } = require('~/config');
 const User = require('~/models/User');
 const { updateUserKey } = require('~/server/services/UserService');
 const { EModelEndpoint } = require('librechat-data-provider');
-const fetch = require('node-fetch');
 
 let crypto;
 try {
