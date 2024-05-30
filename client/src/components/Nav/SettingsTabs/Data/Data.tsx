@@ -50,9 +50,9 @@ function Data() {
         <div className="border-b pb-3 last-of-type:border-b-0 dark:border-gray-600">
           <SharedLinks />
         </div>
-        <div className="border-b pb-3 last-of-type:border-b-0 dark:border-gray-600">
-          <RevokeKeysButton all={true} />
-        </div>
+        {/*<div className="border-b pb-3 last-of-type:border-b-0 dark:border-gray-600">*/}
+        {/*  <RevokeKeysButton all={true} />*/}
+        {/*</div>*/}
         <div className="border-b pb-3 last-of-type:border-b-0 dark:border-gray-600">
           <DeleteCacheButton />
         </div>
