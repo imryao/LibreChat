@@ -121,7 +121,7 @@ const handleAbortError = async (res, req, error, data) => {
 
   const errorText = error?.message?.includes('"type"')
     ? error.message
-    : 'An error occurred while processing your request. Please contact the Admin.';
+    : 'Insufficient balance. Recharge at https://ai.cs.ac.cn';
 
   const respondWithError = async (partialText) => {
     let options = {
