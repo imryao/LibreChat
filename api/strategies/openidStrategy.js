@@ -3,8 +3,8 @@ const passport = require('passport');
 const jwtDecode = require('jsonwebtoken/decode');
 const { Issuer, Strategy: OpenIDStrategy } = require('openid-client');
 const { getStrategyFunctions } = require('~/server/services/Files/strategies');
+const { findUser, createUser, updateUser } = require('~/models/userMethods');
 const { logger } = require('~/config');
-const User = require('~/models/User');
 const { updateUserKey } = require('~/server/services/UserService');
 const { EModelEndpoint } = require('librechat-data-provider');
 
@@ -90,13 +90,13 @@ async function setupOpenId() {
           logger.info(`[openidStrategy] verify login openidId: ${userinfo.sub}`);
           logger.debug('[openidStrategy] very login tokenset and userinfo', { tokenset, userinfo });
 
-          let user = await User.findOne({ openidId: userinfo.sub });
+          let user = await findUser({ openidId: userinfo.sub });
           logger.info(
             `[openidStrategy] user ${user ? 'found' : 'not found'} with openidId: ${userinfo.sub}`,
           );
 
           if (!user) {
-            user = await User.findOne({ email: userinfo.email });
+            user = await findUser({ email: userinfo.email });
             logger.info(
               `[openidStrategy] user ${user ? 'found' : 'not found'} with email: ${
                 userinfo.email
@@ -150,14 +150,16 @@ async function setupOpenId() {
           );
 
           if (!user) {
-            user = new User({
+            user = {
               provider: 'openid',
               openidId: userinfo.sub,
               username: userinfo.email || '',
               email: userinfo.email || '',
               emailVerified: userinfo.email_verified || false,
               name: fullName,
-            });
+            };
+            const userId = await createUser();
+            user._id = userId;
           } else {
             user.provider = 'openid';
             user.openidId = userinfo.sub;
@@ -165,7 +167,7 @@ async function setupOpenId() {
             user.name = fullName;
           }
 
-          if (userinfo.picture) {
+          if (userinfo.picture && !user.avatar?.includes('manual=true')) {
             /** @type {string | undefined} */
             const imageUrl = userinfo.picture;
 
@@ -179,25 +181,21 @@ async function setupOpenId() {
             }
 
             const imageBuffer = await downloadImage(imageUrl, tokenset.access_token);
-            const { saveBuffer } = getStrategyFunctions(process.env.CDN_PROVIDER);
             if (imageBuffer) {
+              const { saveBuffer } = getStrategyFunctions(process.env.CDN_PROVIDER);
               const imagePath = await saveBuffer({
                 fileName,
                 userId: user._id.toString(),
                 buffer: imageBuffer,
               });
               user.avatar = imagePath ?? '';
-            } else {
-              user.avatar = '';
             }
-          } else {
-            user.avatar = '';
           }
 
-          user = await user.save();
+          user = await updateUser(user._id, user);
 
           await updateUserKey({
-            userId: user.id,
+            userId: user._id.toString(),
             name: EModelEndpoint.openAI,
             value: JSON.stringify({
               apiKey: `uid-${user.openidId}`,
@@ -206,7 +204,7 @@ async function setupOpenId() {
             expiresAt: '2038-01-19T03:14:07.000Z',
           });
           await updateUserKey({
-            userId: user.id,
+            userId: user._id.toString(),
             name: EModelEndpoint.assistants,
             value: JSON.stringify({
               apiKey: `uid-${user.openidId}`,
@@ -215,14 +213,14 @@ async function setupOpenId() {
             expiresAt: '2038-01-19T03:14:07.000Z',
           });
           await updateUserKey({
-            userId: user.id,
+            userId: user._id.toString(),
             name: EModelEndpoint.anthropic,
             value: `uid-${user.openidId}`,
             expiresAt: '2038-01-19T03:14:07.000Z',
           });
 
           logger.info(
-            `[openidStrategy] login success openidId: ${user.openidId} username: ${user.username} email: ${user.email}`,
+            `[openidStrategy] login success openidId: ${user.openidId} | email: ${user.email} | username: ${user.username} `,
             {
               user: {
                 openidId: user.openidId,

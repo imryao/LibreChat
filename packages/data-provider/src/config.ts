@@ -677,6 +677,14 @@ export enum ViolationTypes {
    * STT Request Limit Violation.
    */
   STT_LIMIT = 'stt_limit',
+  /**
+   * Reset Password Limit Violation.
+   */
+  RESET_PASSWORD_LIMIT = 'reset_password_limit',
+  /**
+   * Verify Email Limit Violation.
+   */
+  VERIFY_EMAIL_LIMIT = 'verify_email_limit',
 }
 
 /**
@@ -812,6 +820,10 @@ export enum LocalStorageKeys {
   REMEMBER_FORK_OPTION = 'rememberForkOption',
   /** Key for remembering the split at target fork option modifier */
   FORK_SPLIT_AT_TARGET = 'splitAtTarget',
+  /** Key for saving text drafts */
+  TEXT_DRAFT = 'textDraft_',
+  /** Key for saving file drafts */
+  FILES_DRAFT = 'filesDraft_',
 }
 
 export enum ForkOptions {
