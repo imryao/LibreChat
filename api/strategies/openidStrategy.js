@@ -166,8 +166,7 @@ async function setupOpenId() {
               emailVerified: userinfo.email_verified || false,
               name: fullName,
             };
-            const userId = await createUser();
-            user._id = userId;
+            user = await createUser(user, true, true);
           } else {
             user.provider = 'openid';
             user.openidId = userinfo.sub;
