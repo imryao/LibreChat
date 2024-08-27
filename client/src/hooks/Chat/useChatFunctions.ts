@@ -123,7 +123,7 @@ export default function useChatFunctions({
       conversationId = null;
     }
 
-    const parentMessage = currentMessages?.find(
+    const parentMessage = currentMessages.find(
       (msg) => msg.messageId === latestMessage?.parentMessageId,
     );
 
@@ -251,8 +251,7 @@ export default function useChatFunctions({
     }
 
     setSubmission(submission);
-    logger.log('Submission:');
-    logger.dir(submission, { depth: null });
+    logger.dir('message_stream', submission, { depth: null });
   };
 
   const regenerate = ({ parentMessageId }) => {

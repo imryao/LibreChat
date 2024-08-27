@@ -1,7 +1,8 @@
 import { v4 } from 'uuid';
+import { useCallback } from 'react';
+import { useSetRecoilState } from 'recoil';
 import { useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
 import {
   QueryKeys,
   Constants,
@@ -13,11 +14,11 @@ import {
 import type {
   TMessage,
   TConversation,
-  TSubmission,
+  EventSubmission,
   ConversationData,
 } from 'librechat-data-provider';
 import type { SetterOrUpdater, Resetter } from 'recoil';
-import type { TResData, ConvoGenerator } from '~/common';
+import type { TResData, TFinalResData, ConvoGenerator } from '~/common';
 import {
   scrollToEnd,
   addConversation,
@@ -29,6 +30,7 @@ import useContentHandler from '~/hooks/SSE/useContentHandler';
 import type { TGenTitleMutation } from '~/data-provider';
 import { useAuthContext } from '~/hooks/AuthContext';
 import { useLiveAnnouncer } from '~/Providers';
+import store from '~/store';
 
 type TSyncData = {
   sync: boolean;
@@ -65,6 +67,7 @@ export default function useEventHandlers({
   resetLatestMessage,
 }: EventHandlerParams) {
   const queryClient = useQueryClient();
+  const setAbortScroll = useSetRecoilState(store.abortScroll);
   const { announcePolite, announceAssertive } = useLiveAnnouncer();
 
   const { conversationId: paramId } = useParams();
@@ -73,7 +76,7 @@ export default function useEventHandlers({
   const contentHandler = useContentHandler({ setMessages, getMessages });
 
   const messageHandler = useCallback(
-    (data: string | undefined, submission: TSubmission) => {
+    (data: string | undefined, submission: EventSubmission) => {
       const {
         messages,
         userMessage,
@@ -83,6 +86,7 @@ export default function useEventHandlers({
         isRegenerate = false,
       } = submission;
       const text = data ?? '';
+      setIsSubmitting(true);
       if (text.length > 0) {
         announcePolite({
           message: text,
@@ -115,11 +119,11 @@ export default function useEventHandlers({
         ]);
       }
     },
-    [setMessages, announcePolite],
+    [setMessages, announcePolite, setIsSubmitting],
   );
 
   const cancelHandler = useCallback(
-    (data: TResData, submission: TSubmission) => {
+    (data: TResData, submission: EventSubmission) => {
       const { requestMessage, responseMessage, conversation } = data;
       const { messages, isRegenerate = false } = submission;
 
@@ -168,7 +172,7 @@ export default function useEventHandlers({
   );
 
   const syncHandler = useCallback(
-    (data: TSyncData, submission: TSubmission) => {
+    (data: TSyncData, submission: EventSubmission) => {
       const { conversationId, thread_id, responseMessage, requestMessage } = data;
       const { initialResponse, messages: _messages, userMessage } = submission;
 
@@ -182,6 +186,11 @@ export default function useEventHandlers({
           ...responseMessage,
         },
       ]);
+
+      announceAssertive({
+        message: 'start',
+        id: `start-${Date.now()}`,
+      });
 
       let update = {} as TConversation;
       if (setConversation && !isAddedRequest) {
@@ -233,17 +242,18 @@ export default function useEventHandlers({
       }
     },
     [
-      setMessages,
-      setConversation,
       queryClient,
+      setMessages,
       isAddedRequest,
+      setConversation,
+      announceAssertive,
       setShowStopButton,
       resetLatestMessage,
     ],
   );
 
   const createdHandler = useCallback(
-    (data: TResData, submission: TSubmission) => {
+    (data: TResData, submission: EventSubmission) => {
       const { messages, userMessage, isRegenerate = false } = submission;
       const initialResponse = {
         ...submission.initialResponse,
@@ -258,8 +268,8 @@ export default function useEventHandlers({
 
       const { conversationId, parentMessageId } = userMessage;
       announceAssertive({
-        message: 'The AI is generating a response.',
-        id: `ai-generating-${Date.now()}`,
+        message: 'start',
+        id: `start-${Date.now()}`,
       });
 
       let update = {} as TConversation;
@@ -306,20 +316,21 @@ export default function useEventHandlers({
         resetLatestMessage();
       }
 
-      scrollToEnd();
+      scrollToEnd(() => setAbortScroll(false));
     },
     [
       setMessages,
-      setConversation,
       queryClient,
+      setAbortScroll,
       isAddedRequest,
-      resetLatestMessage,
+      setConversation,
       announceAssertive,
+      resetLatestMessage,
     ],
   );
 
   const finalHandler = useCallback(
-    (data: TResData, submission: TSubmission) => {
+    (data: TFinalResData, submission: EventSubmission) => {
       const { requestMessage, responseMessage, conversation, runMessages } = data;
       const { messages, conversation: submissionConvo, isRegenerate = false } = submission;
 
@@ -327,30 +338,30 @@ export default function useEventHandlers({
       setCompleted((prev) => new Set(prev.add(submission.initialResponse.messageId)));
 
       const currentMessages = getMessages();
-      // Early return if messages are empty; i.e., the user navigated away
-      if (!currentMessages?.length) {
+      /* Early return if messages are empty; i.e., the user navigated away */
+      if (!currentMessages || currentMessages.length === 0) {
         return setIsSubmitting(false);
       }
 
       /* a11y announcements */
       announcePolite({
-        message: '',
+        message: responseMessage?.text ?? '',
         isComplete: true,
       });
 
       setTimeout(() => {
         announcePolite({
-          message: 'The AI has finished generating a response.',
-          id: `ai-finished-${Date.now()}`,
+          message: 'end',
+          id: `end-${Date.now()}`,
         });
       }, 100);
 
-      // update the messages; if assistants endpoint, client doesn't receive responseMessage
+      /* Update messages; if assistants endpoint, client doesn't receive responseMessage */
       if (runMessages) {
         setMessages([...runMessages]);
       } else if (isRegenerate && responseMessage) {
         setMessages([...messages, responseMessage]);
-      } else if (responseMessage) {
+      } else if (requestMessage != null && responseMessage != null) {
         setMessages([...messages, requestMessage, responseMessage]);
       }
 
@@ -364,7 +375,7 @@ export default function useEventHandlers({
         });
       }
 
-      // refresh title
+      /* Refresh title */
       if (
         genTitle &&
         isNewConvo &&
@@ -376,14 +387,18 @@ export default function useEventHandlers({
         }, 2500);
       }
 
-      if (setConversation && !isAddedRequest) {
+      if (setConversation && isAddedRequest !== true) {
+        if (window.location.pathname === '/c/new') {
+          window.history.pushState({}, '', '/c/' + conversation.conversationId);
+        }
+
         setConversation((prevState) => {
           const update = {
             ...prevState,
             ...conversation,
           };
 
-          if (prevState?.model && prevState.model !== submissionConvo.model) {
+          if (prevState?.model != null && prevState.model !== submissionConvo.model) {
             update.model = prevState.model;
           }
 
@@ -408,7 +423,7 @@ export default function useEventHandlers({
   );
 
   const errorHandler = useCallback(
-    ({ data, submission }: { data?: TResData; submission: TSubmission }) => {
+    ({ data, submission }: { data?: TResData; submission: EventSubmission }) => {
       const { messages, userMessage, initialResponse } = submission;
 
       setCompleted((prev) => new Set(prev.add(initialResponse.messageId)));
@@ -417,14 +432,14 @@ export default function useEventHandlers({
 
       const parseErrorResponse = (data: TResData | Partial<TMessage>) => {
         const metadata = data['responseMessage'] ?? data;
-        const errorMessage = {
+        const errorMessage: Partial<TMessage> = {
           ...initialResponse,
           ...metadata,
           error: true,
           parentMessageId: userMessage.messageId,
         };
 
-        if (!errorMessage.messageId) {
+        if (errorMessage.messageId === undefined || errorMessage.messageId === '') {
           errorMessage.messageId = v4();
         }
 
@@ -490,7 +505,7 @@ export default function useEventHandlers({
   );
 
   const abortConversation = useCallback(
-    async (conversationId = '', submission: TSubmission, messages?: TMessage[]) => {
+    async (conversationId = '', submission: EventSubmission, messages?: TMessage[]) => {
       const runAbortKey = `${conversationId}:${messages?.[messages.length - 1]?.messageId ?? ''}`;
       console.log({ conversationId, submission, messages, runAbortKey });
       const { endpoint: _endpoint, endpointType } = submission.conversation || {};
@@ -510,7 +525,7 @@ export default function useEventHandlers({
 
         // Check if the response is JSON
         const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
+        if (contentType != null && contentType.includes('application/json')) {
           const data = await response.json();
           console.log(`[aborted] RESPONSE STATUS: ${response.status}`, data);
           if (response.status === 404) {

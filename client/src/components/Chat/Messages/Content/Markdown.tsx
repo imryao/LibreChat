@@ -1,6 +1,5 @@
 import React, { memo, useMemo } from 'react';
 import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import supersub from 'remark-supersub';
 import rehypeKatex from 'rehype-katex';
@@ -8,7 +7,7 @@ import { useRecoilValue } from 'recoil';
 import ReactMarkdown from 'react-markdown';
 import type { PluggableList } from 'unified';
 import rehypeHighlight from 'rehype-highlight';
-import { cn, langSubset, validateIframe, processLaTeX } from '~/utils';
+import { langSubset, preprocessLaTeX, handleDoubleClick } from '~/utils';
 import CodeBlock from '~/components/Messages/Content/CodeBlock';
 import { useFileDownload } from '~/data-provider';
 import useLocalize from '~/hooks/useLocalize';
@@ -21,12 +20,16 @@ type TCodeProps = {
   children: React.ReactNode;
 };
 
-export const code = memo(({ inline, className, children }: TCodeProps) => {
+export const code: React.ElementType = memo(({ inline, className, children }: TCodeProps) => {
   const match = /language-(\w+)/.exec(className ?? '');
   const lang = match && match[1];
 
   if (inline) {
-    return <code className={className}>{children}</code>;
+    return (
+      <code onDoubleClick={handleDoubleClick} className={className}>
+        {children}
+      </code>
+    );
   } else {
     return <CodeBlock lang={lang ?? 'text'} codeChildren={children} />;
   }
@@ -119,7 +122,7 @@ const Markdown = memo(({ content = '', isEdited, showCursor, isLatestMessage }: 
   let currentContent = content;
   if (!isInitializing) {
     currentContent = currentContent.replace('z-index: 1;', '') || '';
-    currentContent = LaTeXParsing ? processLaTeX(currentContent) : currentContent;
+    currentContent = LaTeXParsing ? preprocessLaTeX(currentContent) : currentContent;
   }
 
   const rehypePlugins: PluggableList = [
@@ -132,26 +135,19 @@ const Markdown = memo(({ content = '', isEdited, showCursor, isLatestMessage }: 
         subset: langSubset,
       },
     ],
-    [rehypeRaw],
   ];
 
   if (isInitializing) {
-    rehypePlugins.pop();
     return (
       <div className="absolute">
         <p className="relative">
-          <span className={cn(showCursor === true ? 'result-thinking' : '')} />
+          <span className={isLatestMessage ? 'result-thinking' : ''} />
         </p>
       </div>
     );
   }
 
-  let isValidIframe: string | boolean | null = false;
-  if (isEdited !== true) {
-    isValidIframe = validateIframe(currentContent);
-  }
-
-  if (isEdited === true || (!isLatestMessage && !isValidIframe)) {
+  if (isEdited === true || !isLatestMessage) {
     rehypePlugins.pop();
   }
 
