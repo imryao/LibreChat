@@ -6,6 +6,7 @@ import type { SetterOrUpdater } from 'recoil';
 import type {
   TRole,
   TUser,
+  Agent,
   Action,
   TPreset,
   TPlugin,
@@ -18,6 +19,9 @@ import type {
   TConversation,
   TStartupConfig,
   EModelEndpoint,
+  TEndpointsConfig,
+  ActionMetadata,
+  AssistantDocument,
   AssistantsEndpoint,
   TMessageContentParts,
   AuthorizationTypeEnum,
@@ -65,6 +69,12 @@ export type AssistantListItem = {
   model: string;
 };
 
+export type AgentListItem = {
+  id: string;
+  name: string;
+  avatar: Agent['avatar'];
+};
+
 export type TPluginMap = Record<string, TPlugin>;
 
 export type GenericSetter<T> = (value: T | ((currentValue: T) => T)) => void;
@@ -91,9 +101,12 @@ export type IconMapProps = {
   context?: 'landing' | 'menu-item' | 'nav' | 'message';
   endpoint?: string | null;
   assistantName?: string;
+  agentName?: string;
   avatar?: string;
   size?: number;
 };
+
+export type AgentIconMapProps = IconMapProps & { agentName: string };
 
 export type NavLink = {
   title: string;
@@ -123,6 +136,7 @@ export interface DataColumnMeta {
 export enum Panel {
   builder = 'builder',
   actions = 'actions',
+  model = 'model',
 }
 
 export type FileSetter =
@@ -146,17 +160,40 @@ export type ActionAuthForm = {
   token_exchange_method: TokenExchangeMethodEnum;
 };
 
+export type ActionWithNullableMetadata = Omit<Action, 'metadata'> & {
+  metadata: ActionMetadata | null;
+};
+
 export type AssistantPanelProps = {
   index?: number;
-  action?: Action;
+  action?: ActionWithNullableMetadata;
   actions?: Action[];
   assistant_id?: string;
   activePanel?: string;
   endpoint: AssistantsEndpoint;
   version: number | string;
+  documentsMap: Map<string, AssistantDocument> | null;
   setAction: React.Dispatch<React.SetStateAction<Action | undefined>>;
   setCurrentAssistantId: React.Dispatch<React.SetStateAction<string | undefined>>;
   setActivePanel: React.Dispatch<React.SetStateAction<Panel>>;
+};
+
+export type AgentPanelProps = {
+  index?: number;
+  agent_id?: string;
+  activePanel?: string;
+  action?: Action;
+  actions?: Action[];
+  setActivePanel: React.Dispatch<React.SetStateAction<Panel>>;
+  setAction: React.Dispatch<React.SetStateAction<Action | undefined>>;
+  endpointsConfig?: TEndpointsConfig;
+  setCurrentAgentId: React.Dispatch<React.SetStateAction<string | undefined>>;
+};
+
+export type AgentModelPanelProps = {
+  setActivePanel: React.Dispatch<React.SetStateAction<Panel>>;
+  providers: Option[];
+  models: Record<string, string[]>;
 };
 
 export type AugmentedColumnDef<TData, TValue> = ColumnDef<TData, TValue> & DataColumnMeta;
@@ -380,6 +417,7 @@ export type IconProps = Pick<TMessage, 'isCreatedByUser' | 'model'> &
     endpoint?: EModelEndpoint | string | null;
     endpointType?: EModelEndpoint | null;
     assistantName?: string;
+    agentName?: string;
     error?: boolean;
   };
 
@@ -402,6 +440,7 @@ export type TMessageAudio = {
 };
 
 export type OptionWithIcon = Option & { icon?: React.ReactNode };
+export type DropdownValueSetter = (value: string | Option | OptionWithIcon) => void;
 export type MentionOption = OptionWithIcon & {
   type: string;
   value: string;
