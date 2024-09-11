@@ -2,6 +2,8 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 const {
   supportsBalanceCheck,
+  isAgentsEndpoint,
+  paramEndpoints,
   ErrorTypes,
   Constants,
   CacheKeys,
@@ -64,6 +66,17 @@ class BaseClient {
 
   async summarizeMessages() {
     throw new Error('Subclasses attempted to call summarizeMessages without implementing it');
+  }
+
+  /**
+   * @returns {string}
+   */
+  getResponseModel() {
+    if (isAgentsEndpoint(this.options.endpoint) && this.options.agent && this.options.agent.id) {
+      return this.options.agent.id;
+    }
+
+    return this.modelOptions.model;
   }
 
   /**
@@ -217,6 +230,7 @@ class BaseClient {
         userMessage,
         conversationId,
         responseMessageId,
+        sender: this.sender,
       });
     }
 
@@ -548,6 +562,7 @@ class BaseClient {
       });
     }
 
+    /** @type {string|string[]|undefined} */
     const completion = await this.sendCompletion(payload, opts);
     this.abortController.requestCompleted = true;
 
@@ -557,7 +572,7 @@ class BaseClient {
       parentMessageId: userMessage.messageId,
       isCreatedByUser: false,
       isEdited,
-      model: this.modelOptions.model,
+      model: this.getResponseModel(),
       sender: this.sender,
       promptTokens,
       iconURL: this.options.iconURL,
@@ -567,9 +582,11 @@ class BaseClient {
 
     if (typeof completion === 'string') {
       responseMessage.text = addSpaceIfNeeded(generation) + completion;
-    } else if (completion) {
+    } else if (Array.isArray(completion) && paramEndpoints.has(this.options.endpoint)) {
       responseMessage.text = '';
       responseMessage.content = completion;
+    } else if (Array.isArray(completion)) {
+      responseMessage.text = addSpaceIfNeeded(generation) + completion.join('');
     }
 
     if (

@@ -22,6 +22,10 @@ export default {
     'It appears that the content submitted has been flagged by our moderation system for not aligning with our community guidelines. We\'re unable to proceed with this specific topic. If you have any other questions or topics you\'d like to explore, please edit your message, or create a new conversation.',
   com_error_no_user_key: 'No key found. Please provide a key and try again.',
   com_error_no_base_url: 'No base URL found. Please provide one and try again.',
+  com_warning_resubmit_unsupported:
+    'Resubmitting the AI message is not supported for this endpoint.',
+  com_error_invalid_request:
+    'The AI service rejected the request due to an error. This could be caused by an invalid API key or an improperly formatted request.',
   com_error_invalid_user_key: 'Invalid key provided. Please provide a valid key and try again.',
   com_error_expired_user_key:
     'Provided key for {0} expired at {1}. Please provide a new key and try again.',
@@ -140,12 +144,15 @@ export default {
   com_ui_endpoint: 'Endpoint',
   com_ui_provider: 'Provider',
   com_ui_model: 'Model',
+  com_ui_region: 'Region',
   com_ui_model_parameters: 'Model Parameters',
   com_ui_model_save_success: 'Model parameters saved successfully',
   com_ui_select_model: 'Select a model',
+  com_ui_select_region: 'Select a region',
   com_ui_select_provider: 'Select a provider',
   com_ui_select_provider_first: 'Select a provider first',
   com_ui_select_search_model: 'Search model by name',
+  com_ui_select_search_region: 'Search region by name',
   com_ui_select_search_plugin: 'Search plugin by name',
   com_ui_use_prompt: 'Use prompt',
   com_ui_prev: 'Prev',
@@ -750,6 +757,9 @@ export default {
   com_nav_info_delete_cache_storage:
     'This action will delete all cached TTS (Text-to-Speech) audio files stored on your device. Cached audio files are used to speed up playback of previously generated TTS audio, but they can consume storage space on your device.',
   // Command Settings Tab
+  com_nav_chat_commands: 'Chat Commands',
+  com_nav_chat_commands_info:
+    'These commands are activated by typing specific characters at the beginning of your message. Each command is triggered by its designated prefix. You can disable them if you frequently use these characters to start messages.',
   com_nav_commands: 'Commands',
   com_nav_commands_tab: 'Command Settings',
   com_nav_at_command: '@-Command',

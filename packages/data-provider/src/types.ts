@@ -128,6 +128,13 @@ export type TUpdateMessageRequest = {
   text: string;
 };
 
+export type TUpdateMessageContent = {
+  conversationId: string;
+  messageId: string;
+  index: number;
+  text: string;
+};
+
 export type TUpdateUserKeyRequest = {
   name: string;
   value: string;
@@ -221,6 +228,7 @@ export type TConfig = {
   type?: EModelEndpoint;
   azure?: boolean;
   availableTools?: [];
+  availableRegions?: string[];
   plugins?: Record<string, string>;
   name?: string;
   iconURL?: string;
@@ -302,13 +310,16 @@ export type TInterfaceConfig = {
     openNewTab?: boolean;
     modalAcceptance?: boolean;
     modalTitle?: string;
-    modalContent?: string;
+    modalContent?: string | string[];
   };
   endpointsMenu: boolean;
   modelSelect: boolean;
   parameters: boolean;
   sidePanel: boolean;
   presets: boolean;
+  multiConvo: boolean;
+  bookmarks: boolean;
+  prompts: boolean;
 };
 
 export type TStartupConfig = {
