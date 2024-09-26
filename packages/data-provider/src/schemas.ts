@@ -508,6 +508,7 @@ export const tConversationSchema = z.object({
   conversationId: z.string().nullable(),
   endpoint: eModelEndpointSchema.nullable(),
   endpointType: eModelEndpointSchema.optional(),
+  isArchived: z.boolean().optional(),
   title: z.string().nullable().or(z.literal('New Chat')).default('New Chat'),
   user: z.string().optional(),
   messages: z.array(z.string()).optional(),
@@ -930,6 +931,7 @@ export const agentsSchema = tConversationSchema
 export const openAISchema = tConversationSchema
   .pick({
     model: true,
+    modelLabel: true,
     chatGptLabel: true,
     promptPrefix: true,
     temperature: true,
@@ -1017,6 +1019,7 @@ export const compactChatGPTSchema = tConversationSchema
 export const compactPluginsSchema = tConversationSchema
   .pick({
     model: true,
+    modelLabel: true,
     chatGptLabel: true,
     promptPrefix: true,
     temperature: true,
@@ -1032,6 +1035,9 @@ export const compactPluginsSchema = tConversationSchema
   })
   .transform((obj) => {
     const newObj: Partial<TConversation> = { ...obj };
+    if (newObj.modelLabel === null) {
+      delete newObj.modelLabel;
+    }
     if (newObj.chatGptLabel === null) {
       delete newObj.chatGptLabel;
     }
