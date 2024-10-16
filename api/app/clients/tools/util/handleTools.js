@@ -1,8 +1,8 @@
+const { Tools } = require('librechat-data-provider');
 const { ZapierToolKit } = require('langchain/agents');
 const { Calculator } = require('langchain/tools/calculator');
-const { WebBrowser } = require('langchain/tools/webbrowser');
 const { SerpAPI, ZapierNLAWrapper } = require('langchain/tools');
-const { OpenAIEmbeddings } = require('langchain/embeddings/openai');
+const { createCodeExecutionTool, EnvVar } = require('@librechat/agents');
 const { getUserPluginAuthValue } = require('~/server/services/PluginService');
 const {
   availableTools,
@@ -24,6 +24,7 @@ const {
   StructuredWolfram,
   TavilySearchResults,
 } = require('../');
+const createFileSearchTool = require('./createFileSearchTool');
 const { loadToolSuite } = require('./loadToolSuite');
 const { loadSpecs } = require('./loadSpecs');
 const { logger } = require('~/config');
@@ -97,6 +98,46 @@ const validateTools = async (user, tools = []) => {
   }
 };
 
+const loadAuthValues = async ({ userId, authFields }) => {
+  let authValues = {};
+
+  /**
+   * Finds the first non-empty value for the given authentication field, supporting alternate fields.
+   * @param {string[]} fields Array of strings representing the authentication fields. Supports alternate fields delimited by "||".
+   * @returns {Promise<{ authField: string, authValue: string} | null>} An object containing the authentication field and value, or null if not found.
+   */
+  const findAuthValue = async (fields) => {
+    for (const field of fields) {
+      let value = process.env[field];
+      if (value) {
+        return { authField: field, authValue: value };
+      }
+      try {
+        value = await getUserPluginAuthValue(userId, field);
+      } catch (err) {
+        if (field === fields[fields.length - 1] && !value) {
+          throw err;
+        }
+      }
+      if (value) {
+        return { authField: field, authValue: value };
+      }
+    }
+    return null;
+  };
+
+  for (let authField of authFields) {
+    const fields = authField.split('||');
+    const result = await findAuthValue(fields);
+    if (result) {
+      authValues[result.authField] = result.authValue;
+    }
+  }
+
+    return new ToolConstructor({ ...options, ...authValues, userId, openAIApiKey });
+  return authValues;
+};
+
 /**
  * Initializes a tool with authentication values for the given user, supporting alternate authentication fields.
  * Authentication fields can have alternates separated by "||", and the first defined variable will be used.
@@ -110,41 +151,7 @@ const validateTools = async (user, tools = []) => {
  */
 const loadToolWithAuth = (userId, authFields, ToolConstructor, options = {}, openAIApiKey) => {
   return async function () {
-    let authValues = {};
-
-    /**
-     * Finds the first non-empty value for the given authentication field, supporting alternate fields.
-     * @param {string[]} fields Array of strings representing the authentication fields. Supports alternate fields delimited by "||".
-     * @returns {Promise<{ authField: string, authValue: string} | null>} An object containing the authentication field and value, or null if not found.
-     */
-    const findAuthValue = async (fields) => {
-      for (const field of fields) {
-        let value = process.env[field];
-        if (value) {
-          return { authField: field, authValue: value };
-        }
-        try {
-          value = await getUserPluginAuthValue(userId, field);
-        } catch (err) {
-          if (field === fields[fields.length - 1] && !value) {
-            throw err;
-          }
-        }
-        if (value) {
-          return { authField: field, authValue: value };
-        }
-      }
-      return null;
-    };
-
-    for (let authField of authFields) {
-      const fields = authField.split('||');
-      const result = await findAuthValue(fields);
-      if (result) {
-        authValues[result.authField] = result.authValue;
-      }
-    }
-
+    const authValues = await loadAuthValues({ userId, authFields });
     return new ToolConstructor({ ...options, ...authValues, userId, openAIApiKey });
   };
 };
@@ -200,14 +207,6 @@ const loadTools = async ({
         user,
         options,
       });
-    },
-    'web-browser': async () => {
-      // let openAIApiKey = options.openAIApiKey ?? process.env.OPENAI_API_KEY;
-      // openAIApiKey = openAIApiKey === 'user_provided' ? null : openAIApiKey;
-      // openAIApiKey = openAIApiKey || (await getUserPluginAuthValue(user, 'OPENAI_API_KEY'));
-      const browser = new WebBrowser({ model, embeddings: new OpenAIEmbeddings({ openAIApiKey }) });
-      browser.description_for_model = browser.description;
-      return browser;
     },
     serpapi: async () => {
       let apiKey = process.env.SERPAPI_API_KEY;
@@ -265,6 +264,22 @@ const loadTools = async ({
   const remainingTools = [];
 
   for (const tool of tools) {
+    if (tool === Tools.execute_code) {
+      const authValues = await loadAuthValues({
+        userId: user.id,
+        authFields: [EnvVar.CODE_API_KEY],
+      });
+      requestedTools[tool] = () =>
+        createCodeExecutionTool({
+          user_id: user.id,
+          ...authValues,
+        });
+      continue;
+    } else if (tool === Tools.file_search) {
+      requestedTools[tool] = () => createFileSearchTool(options);
+      continue;
+    }
+
     if (customConstructors[tool]) {
       requestedTools[tool] = customConstructors[tool];
       continue;
@@ -333,6 +348,7 @@ const loadTools = async ({
 
 module.exports = {
   loadToolWithAuth,
+  loadAuthValues,
   validateTools,
   loadTools,
 };

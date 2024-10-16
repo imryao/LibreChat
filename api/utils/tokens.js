@@ -14,6 +14,7 @@ const openAIModels = {
   'gpt-4-0125': 127500, // -500 from max
   'gpt-4o': 127500, // -500 from max
   'gpt-4o-mini': 127500, // -500 from max
+  'gpt-4o-2024-05-13': 127500, // -500 from max
   'gpt-4o-2024-08-06': 127500, // -500 from max
   'gpt-4-turbo': 127500, // -500 from max
   'gpt-4-vision': 127500, // -500 from max
@@ -123,7 +124,16 @@ const modelMaxOutputs = {
   system_default: 1024,
 };
 
+const anthropicMaxOutputs = {
+  'claude-3-haiku': 4096,
+  'claude-3-sonnet': 4096,
+  'claude-3-opus': 4096,
+  'claude-3.5-sonnet': 8192,
+  'claude-3-5-sonnet': 8192,
+};
+
 const maxOutputTokensMap = {
+  [EModelEndpoint.anthropic]: anthropicMaxOutputs,
   [EModelEndpoint.azureOpenAI]: modelMaxOutputs,
   [EModelEndpoint.openAI]: modelMaxOutputs,
   [EModelEndpoint.custom]: modelMaxOutputs,
