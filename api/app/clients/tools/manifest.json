@@ -44,32 +44,6 @@
     ]
   },
   {
-    "name": "E2B Code Interpreter",
-    "pluginKey": "e2b_code_interpreter",
-    "description": "[Experimental] Sandboxed cloud environment where you can run any process, use filesystem and access the internet. Requires https://github.com/e2b-dev/chatgpt-plugin",
-    "icon": "https://raw.githubusercontent.com/e2b-dev/chatgpt-plugin/main/logo.png",
-    "authConfig": [
-      {
-        "authField": "E2B_SERVER_URL",
-        "label": "E2B Server URL",
-        "description": "Hosted endpoint must be provided"
-      }
-    ]
-  },
-  {
-    "name": "CodeSherpa",
-    "pluginKey": "codesherpa_tools",
-    "description": "[Experimental] A REPL for your chat. Requires https://github.com/iamgreggarcia/codesherpa",
-    "icon": "https://raw.githubusercontent.com/iamgreggarcia/codesherpa/main/localserver/_logo.png",
-    "authConfig": [
-      {
-        "authField": "CODESHERPA_SERVER_URL",
-        "label": "CodeSherpa Server URL",
-        "description": "Hosted endpoint must be provided"
-      }
-    ]
-  },
-  {
     "name": "Browser",
     "pluginKey": "web-browser",
     "description": "Scrape and summarize webpage data",
@@ -137,19 +111,6 @@
     ]
   },
   {
-    "name": "Zapier",
-    "pluginKey": "zapier",
-    "description": "Interact with over 5,000+ apps like Google Sheets, Gmail, HubSpot, Salesforce, and thousands more.",
-    "icon": "https://cdn.zappy.app/8f853364f9b383d65b44e184e04689ed.png",
-    "authConfig": [
-      {
-        "authField": "ZAPIER_NLA_API_KEY",
-        "label": "Zapier API Key",
-        "description": "You can use Zapier with your API Key from Zapier."
-      }
-    ]
-  },
-  {
     "name": "Azure AI Search",
     "pluginKey": "azure-ai-search",
     "description": "Use Azure AI Search to find information",
@@ -171,12 +132,5 @@
         "description": "You need to provideq your API Key for Azure AI Search."
       }
     ]
-  },
-  {
-    "name": "CodeBrew",
-    "pluginKey": "CodeBrew",
-    "description": "Use 'CodeBrew' to virtually interpret Python, Node, C, C++, Java, C#, PHP, MySQL, Rust or Go code.",
-    "icon": "https://imgur.com/iLE5ceA.png",
-    "authConfig": []
   }
 ]
