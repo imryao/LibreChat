@@ -420,7 +420,7 @@ class AnthropicClient extends BaseClient {
     }
 
     let { context: messagesInWindow, remainingContextTokens } =
-      await this.getMessagesWithinTokenLimit(formattedMessages);
+      await this.getMessagesWithinTokenLimit({ messages: formattedMessages });
 
     const tokenCountMap = orderedMessages
       .slice(orderedMessages.length - messagesInWindow.length)
